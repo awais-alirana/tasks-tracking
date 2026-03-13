@@ -171,10 +171,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const isLeader = contact.name === "Team Leader";
 
             return `
-            <div class="p-3 bg-white border-b border-gray-100 cursor-pointer hover:bg-slate-50 transition-colors ${isActive ? 'bg-slate-50 border-l-4 border-l-indigo-600' : ''}" onclick="window.selectEmpChatContact('${contact.name}')">
+            <div class="p-3 bg-white border-b border-gray-100 cursor-pointer hover:bg-slate-50 transition-colors ${isActive ? 'bg-slate-50 border-l-4 border-l-slate-600' : ''}" onclick="window.selectEmpChatContact('${contact.name}')">
                 <div class="flex items-center gap-3">
                     <div class="relative">
-                        <div class="w-10 h-10 rounded-full ${isActive ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold">
+                        <div class="w-10 h-10 rounded-full ${isActive ? 'bg-slate-200 text-slate-800' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-bold">
                             ${isLeader ? 'L' : 'M'}
                         </div>
                         ${unreadCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">${unreadCount}</span>` : ''}
@@ -204,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
         empChatInput.classList.remove("bg-gray-100", "cursor-not-allowed");
         empChatInput.classList.add("bg-white");
         empChatSend.classList.remove("bg-gray-400", "cursor-not-allowed");
-        empChatSend.classList.add("bg-indigo-600", "hover:bg-indigo-700");
+        empChatSend.classList.add("bg-slate-600", "hover:bg-slate-700");
         
         markMessagesRead(name, currentUser.name);
         renderEmpChatList();
@@ -234,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (conversation.length === 0) {
             empChatMessages.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-full text-center p-6 opacity-60 m-auto">
-                    <i class="fa-regular fa-comments text-4xl mb-3 text-indigo-200"></i>
+                    <i class="fa-regular fa-comments text-4xl mb-3 text-slate-300"></i>
                     <p class="text-gray-600 text-sm">No messages yet.</p>
                 </div>`;
             return;
@@ -245,9 +245,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const isMe = msg.sender === currentUser.name;
                 return `
                 <div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeIn">
-                    <div class="max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${isMe ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}">
+                    <div class="max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${isMe ? 'bg-slate-800 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}">
                         <p class="whitespace-pre-wrap break-words leading-relaxed">${msg.text}</p>
-                        <p class="text-[10px] mt-1.5 text-right font-medium ${isMe ? 'text-indigo-200' : 'text-gray-400'}">${msg.time}</p>
+                        <p class="text-[10px] mt-1.5 text-right font-medium ${isMe ? 'text-slate-300' : 'text-gray-400'}">${msg.time}</p>
                     </div>
                 </div>`;
             }).join('')}

@@ -10,6 +10,10 @@
     <style>
         #sidebar { transition: transform 0.3s ease; }
         #sidebar-overlay { transition: opacity 0.3s ease; }
+        .chat-area { height: calc(100dvh - 220px); min-height: 420px; }
+        @media (max-width: 768px) { .chat-area { height: calc(100dvh - 160px); min-height: 360px; } }
+        * { -webkit-tap-highlight-color: transparent; }
+        input, select, textarea { font-size: 16px !important; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800 font-sans m-0">
@@ -80,13 +84,13 @@
             </div>
 
             <!-- Content -->
-            <div class="flex-1 bg-white p-4 sm:p-6 md:p-8 overflow-y-auto">
+            <div class="flex-1 bg-white p-3 sm:p-6 md:p-8 overflow-y-auto">
 
                 <!-- ── All Tasks Overview ── -->
                 <div id="section-manager-view-tasks" class="flex flex-col animate-fadeIn w-full max-w-4xl mx-auto">
                     <div class="mb-6 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
                         <div>
-                            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight">System Overview</h2>
+                            <h2 class="text-xl sm:text-3xl font-bold text-gray-800 tracking-tight">System Overview</h2>
                             <p class="text-gray-500 text-sm mt-1">Monitor the progress of all tasks across the team.</p>
                         </div>
                         <div class="flex items-center gap-2">
@@ -104,7 +108,7 @@
                         <p class="text-gray-500 text-sm mt-1">Communicate with the Leader and Employees.</p>
                     </div>
 
-                    <div class="flex flex-col lg:flex-row gap-6" style="height: calc(100vh - 220px); min-height: 450px;">
+                    <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 chat-area">
                         <!-- Sidebar: Contact List -->
                         <div class="w-full lg:w-72 flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm shrink-0">
                             <div class="p-3 bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-widest">Contacts</div>
@@ -157,5 +161,25 @@
     </div>
 
     <script type="module" src="assets/js/manager.js"></script>
+    <script>
+        // Sidebar toggle for mobile
+        const _mgr_sidebar = document.getElementById('sidebar');
+        const _mgr_overlay = document.getElementById('sidebar-overlay');
+        const _mgr_btnOpen = document.getElementById('sidebar-open');
+        const _mgr_btnClose = document.getElementById('sidebar-close');
+        function _mgr_openSidebar() {
+            _mgr_sidebar.classList.remove('-translate-x-full');
+            _mgr_overlay.classList.remove('hidden');
+            setTimeout(() => _mgr_overlay.classList.remove('opacity-0'), 10);
+        }
+        function _mgr_closeSidebar() {
+            _mgr_sidebar.classList.add('-translate-x-full');
+            _mgr_overlay.classList.add('opacity-0');
+            setTimeout(() => _mgr_overlay.classList.add('hidden'), 300);
+        }
+        if(_mgr_btnOpen) _mgr_btnOpen.addEventListener('click', _mgr_openSidebar);
+        if(_mgr_btnClose) _mgr_btnClose.addEventListener('click', _mgr_closeSidebar);
+        if(_mgr_overlay) _mgr_overlay.addEventListener('click', _mgr_closeSidebar);
+    </script>
 </body>
 </html>

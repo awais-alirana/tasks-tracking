@@ -10,6 +10,10 @@
     <style>
         #sidebar { transition: transform 0.3s ease; }
         #sidebar-overlay { transition: opacity 0.3s ease; }
+        .chat-area { height: calc(100dvh - 220px); min-height: 420px; }
+        @media (max-width: 768px) { .chat-area { height: calc(100dvh - 160px); min-height: 360px; } }
+        * { -webkit-tap-highlight-color: transparent; }
+        input, select, textarea { font-size: 16px !important; } /* prevent iOS zoom */
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800 font-sans m-0">
@@ -80,13 +84,13 @@
             </div>
 
             <!-- Content -->
-            <div class="flex-1 bg-white p-4 sm:p-6 md:p-8 overflow-y-auto">
+            <div class="flex-1 bg-white p-3 sm:p-6 md:p-8 overflow-y-auto">
 
                 <!-- ── My Tasks ── -->
                 <div id="section-tasks" class="flex flex-col w-full max-w-4xl mx-auto animate-fadeIn">
-                    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end border-b pb-4 gap-2">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">My Tasks</h2>
+                    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end border-b pb-4 gap-3">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                            <h2 class="text-xl sm:text-3xl font-bold text-gray-800">My Tasks</h2>
                             <div class="flex items-center gap-2 sm:ml-4">
                                 <label for="filter-date-employee" class="text-xs font-bold text-gray-400 uppercase tracking-widest">Filter Date:</label>
                                 <input type="date" id="filter-date-employee" class="text-sm border border-gray-300 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-slate-600">
@@ -106,14 +110,14 @@
                         <p class="text-gray-500 text-sm mt-1">Chat with the Team Leader and the Manager.</p>
                     </div>
 
-                    <div class="flex flex-col lg:flex-row gap-6" style="height: calc(100vh - 220px); min-height: 480px;">
+                    <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 chat-area">
                         <!-- Sidebar: Contact List -->
                         <div class="w-full lg:w-72 flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm shrink-0">
                             <div class="p-3 bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-widest">Contacts</div>
                             
                             <!-- Mobile select (hidden on lg) -->
                             <div class="p-2 border-b border-gray-100 lg:hidden">
-                                <select id="emp-chat-mobile-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 outline-none font-medium text-slate-800 bg-slate-50">
+                                <select id="emp-chat-mobile-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 outline-none font-medium text-slate-800 bg-slate-50">
                                     <option value="">-- Select a contact --</option>
                                     <option value="Team Leader">Team Leader</option>
                                     <option value="Manager">Manager</option>
@@ -124,7 +128,7 @@
                                 <!-- Fixed contacts for Employee -->
                                 <div id="contact-leader" class="p-3 bg-white border-b border-gray-100 cursor-pointer hover:bg-slate-50 transition-colors" onclick="window.selectEmpChatContact('Team Leader')">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">L</div>
+                                        <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold">L</div>
                                         <div class="flex-1 min-w-0">
                                             <h4 class="font-bold text-gray-800 text-sm truncate">Team Leader</h4>
                                             <p id="last-msg-leader" class="text-xs text-gray-500 truncate">No messages yet.</p>
@@ -147,7 +151,7 @@
                         <div class="flex-1 flex flex-col bg-gray-50 border border-gray-200 rounded-xl shadow-inner overflow-hidden">
                             <!-- Chat header -->
                             <div class="p-3 sm:p-4 bg-white border-b border-gray-200 flex items-center gap-3 shrink-0">
-                                <div id="emp-chat-active-avatar" class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-800 font-bold flex items-center justify-center hidden shrink-0"></div>
+                                <div id="emp-chat-active-avatar" class="w-9 h-9 rounded-full bg-slate-200 text-slate-800 font-bold flex items-center justify-center hidden shrink-0"></div>
                                 <h4 id="emp-chat-active-name" class="font-bold text-gray-800 text-sm sm:text-base">No contact selected</h4>
                             </div>
 
@@ -162,7 +166,7 @@
                             <!-- Input -->
                             <div class="bg-white p-3 border-t border-gray-200 flex gap-2 shrink-0">
                                 <input type="text" id="emp-chat-input" disabled
-                                    class="flex-1 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-sm bg-gray-100 cursor-not-allowed"
+                                    class="flex-1 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-600 outline-none transition-all text-sm bg-gray-100 cursor-not-allowed"
                                     placeholder="Type a message...">
                                 <button id="emp-chat-send" disabled
                                     class="bg-gray-400 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-colors flex items-center gap-2 shrink-0 cursor-not-allowed text-sm">
