@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow — Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .role-form {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+        .role-form.open {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .role-btn.active {
+            border-color: #334155;
+            background-color: #f8fafc;
+        }
+        .role-btn.active .role-icon { color: #1e293b; }
+        .spinner { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4 font-sans">
+
+    <div class="w-full max-w-md">
+        <!-- Card -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+
+            <!-- Header -->
+            <div class="bg-slate-800 px-8 py-7 text-center">
+                <h1 class="text-3xl font-bold text-white mb-1 flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-list-check"></i> TaskFlow
+                </h1>
+                <p class="text-slate-400 text-sm">Select your role and sign in</p>
+            </div>
+
+            <div class="p-7">
+
+                <!-- Role Buttons -->
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Login As</p>
+                <div class="grid grid-cols-3 gap-3 mb-5">
+                    <!-- Leader -->
+                    <button id="btn-role-leader" class="role-btn border-2 border-gray-200 rounded-xl py-4 flex flex-col items-center gap-2 hover:border-slate-500 hover:bg-slate-50 transition-all cursor-pointer focus:outline-none">
+                        <i class="role-icon fa-solid fa-user-tie text-2xl text-slate-500 transition-colors"></i>
+                        <span class="text-sm font-semibold text-slate-700">Leader</span>
+                    </button>
+                    <!-- Employee -->
+                    <button id="btn-role-employee" class="role-btn border-2 border-gray-200 rounded-xl py-4 flex flex-col items-center gap-2 hover:border-slate-500 hover:bg-slate-50 transition-all cursor-pointer focus:outline-none">
+                        <i class="role-icon fa-solid fa-users text-2xl text-slate-500 transition-colors"></i>
+                        <span class="text-sm font-semibold text-slate-700">Employee</span>
+                    </button>
+                    <!-- Manager -->
+                    <button id="btn-role-manager" class="role-btn border-2 border-gray-200 rounded-xl py-4 flex flex-col items-center gap-2 hover:border-slate-500 hover:bg-slate-50 transition-all cursor-pointer focus:outline-none">
+                        <i class="role-icon fa-solid fa-user-shield text-2xl text-slate-500 transition-colors"></i>
+                        <span class="text-sm font-semibold text-slate-700">Manager</span>
+                    </button>
+                </div>
+
+                <!-- ═══ LEADER FORM ═══ -->
+                <div id="form-leader" class="role-form">
+                    <div class="border-t border-slate-100 pt-5">
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</label>
+                            <input type="email" id="leader-email" readonly
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-sm outline-none cursor-default">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
+                            <input type="password" id="leader-password"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all text-sm"
+                                placeholder="Enter your password">
+                        </div>
+                        <div id="leader-error" class="hidden text-red-700 text-xs bg-red-50 border border-red-200 px-3 py-2 rounded-lg mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> <span id="leader-error-msg"></span>
+                        </div>
+                        <button id="btn-login-leader"
+                            class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 active:bg-slate-900 transition-all shadow-md flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Login as Leader
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══ EMPLOYEE FORM ═══ -->
+                <div id="form-employee" class="role-form">
+                    <div class="border-t border-slate-100 pt-5">
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Your Name</label>
+                            <select id="emp-select"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all text-sm bg-white">
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
+                            <input type="password" id="emp-password"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all text-sm"
+                                placeholder="Enter your password">
+                        </div>
+                        <div id="emp-error" class="hidden text-red-700 text-xs bg-red-50 border border-red-200 px-3 py-2 rounded-lg mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> <span id="emp-error-msg"></span>
+                        </div>
+                        <button id="btn-login-emp"
+                            class="w-full bg-slate-600 text-white font-bold py-3 rounded-xl hover:bg-slate-500 active:bg-slate-700 transition-all shadow-md flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Login as Employee
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══ MANAGER FORM ═══ -->
+                <div id="form-manager" class="role-form">
+                    <div class="border-t border-slate-100 pt-5">
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</label>
+                            <input type="email" id="manager-email" readonly
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-sm outline-none cursor-default">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Password</label>
+                            <input type="password" id="manager-password"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all text-sm"
+                                placeholder="Enter your password">
+                        </div>
+                        <div id="manager-error" class="hidden text-red-700 text-xs bg-red-50 border border-red-200 px-3 py-2 rounded-lg mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> <span id="manager-error-msg"></span>
+                        </div>
+                        <button id="btn-login-manager"
+                            class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 active:bg-slate-900 transition-all shadow-md flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Login as Manager
+                        </button>
+                    </div>
+                </div>
+
+            </div><!-- /card body -->
+        </div><!-- /card -->
+
+        <p class="text-center text-xs text-slate-400 mt-4">TaskFlow &copy; 2026 &bull; Developed by Innova8ify, LLC &bull; Task Management System</p>
+    </div>
+
+    <script type="module" src="assets/js/script.js"></script>
+</body>
+</html>
