@@ -152,12 +152,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ---- Chat: Render Contact List sidebar ----
     function renderEmpChatList() {
+        // Fixed contacts for Employee
         const chatContacts = [{ name: "Team Leader" }, { name: "Manager" }];
-        let mobileOptions = `<option value="">Select a contact...</option>`;
+        
+        let mobileOptions = `<option value="">-- Select a contact --</option>`;
+        
         empChatContactList.innerHTML = chatContacts.map(contact => {
             mobileOptions += `<option value="${contact.name}">${contact.name}</option>`;
+            
             const isActive = activeChatContact === contact.name;
-            const conversation = messages.filter(m => (m.sender === contact.name && m.receiver === currentUser.name) || (m.sender === currentUser.name && m.receiver === contact.name));
+            const conversation = messages.filter(m => 
+                (m.sender === contact.name && m.receiver === currentUser.name) || 
+                (m.sender === currentUser.name && m.receiver === contact.name)
+            );
             const lastMsg = conversation.length > 0 ? conversation[conversation.length - 1].text : "No messages yet.";
             const unreadCount = messages.filter(m => m.sender === contact.name && m.receiver === currentUser.name && !m.read).length;
             
@@ -179,6 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>`;
         }).join('');
+        
         empChatMobileSelect.innerHTML = mobileOptions;
         if (activeChatContact) empChatMobileSelect.value = activeChatContact;
     }
@@ -186,44 +194,65 @@ document.addEventListener("DOMContentLoaded", () => {
     window.selectEmpChatContact = function(name) {
         activeChatContact = name;
         if (empChatMobileSelect) empChatMobileSelect.value = name;
+        
         empChatActiveAvatar.classList.remove("hidden");
         empChatActiveAvatar.textContent = name === "Team Leader" ? "L" : "M";
         empChatActiveName.textContent = name;
+        
         empChatInput.disabled = false;
         empChatSend.disabled = false;
         empChatInput.classList.remove("bg-gray-100", "cursor-not-allowed");
         empChatInput.classList.add("bg-white");
         empChatSend.classList.remove("bg-gray-400", "cursor-not-allowed");
         empChatSend.classList.add("bg-indigo-600", "hover:bg-indigo-700");
+        
         markMessagesRead(name, currentUser.name);
         renderEmpChatList();
         renderEmpChatMessages();
         setTimeout(() => empChatInput.focus(), 100);
     };
 
-    empChatMobileSelect.addEventListener("change", (e) => { if (e.target.value) window.selectEmpChatContact(e.target.value); });
+    empChatMobileSelect.addEventListener("change", (e) => { 
+        if (e.target.value) window.selectEmpChatContact(e.target.value); 
+    });
 
     function renderEmpChatMessages() {
-        if (!activeChatContact) return;
+        if (!activeChatContact) {
+            empChatMessages.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-center p-6 opacity-50 m-auto">
+                    <i class="fa-regular fa-comments text-4xl sm:text-5xl mb-3 text-gray-400"></i>
+                    <p class="text-gray-500 text-sm">Select a contact to start chatting.</p>
+                </div>`;
+            return;
+        }
+
         const conversation = messages.filter(m =>
             (m.sender === activeChatContact && m.receiver === currentUser.name) ||
             (m.sender === currentUser.name && m.receiver === activeChatContact)
         );
+
         if (conversation.length === 0) {
-            empChatMessages.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-center p-6 opacity-60 m-auto"><i class="fa-regular fa-comments text-4xl mb-3 text-indigo-200"></i><p class="text-gray-600 text-sm">No messages yet.</p></div>`;
+            empChatMessages.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-center p-6 opacity-60 m-auto">
+                    <i class="fa-regular fa-comments text-4xl mb-3 text-indigo-200"></i>
+                    <p class="text-gray-600 text-sm">No messages yet.</p>
+                </div>`;
             return;
         }
-        empChatMessages.innerHTML = `<div class="space-y-4 pt-2 pb-2">
+
+        empChatMessages.innerHTML = `<div class="space-y-4 flex-1 pb-2">
             ${conversation.map(msg => {
                 const isMe = msg.sender === currentUser.name;
-                return `<div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'} mb-4">
-                    <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${isMe ? 'bg-slate-800 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}">
-                        <p class="whitespace-pre-wrap break-words">${msg.text}</p>
-                        <p class="text-[10px] mt-1 text-right ${isMe ? 'text-slate-300' : 'text-gray-400'}">${msg.time}</p>
+                return `
+                <div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeIn">
+                    <div class="max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${isMe ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}">
+                        <p class="whitespace-pre-wrap break-words leading-relaxed">${msg.text}</p>
+                        <p class="text-[10px] mt-1.5 text-right font-medium ${isMe ? 'text-indigo-200' : 'text-gray-400'}">${msg.time}</p>
                     </div>
                 </div>`;
             }).join('')}
         </div>`;
+        
         empChatMessages.scrollTop = empChatMessages.scrollHeight;
     }
 
