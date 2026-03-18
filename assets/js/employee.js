@@ -3,7 +3,10 @@ import {
     updateTask,
     listenMessages,
     addMessage,
-    markMessagesRead
+    markMessagesRead,
+    listenAllClients,
+    deleteMessage,
+    clearChat
 } from "./firebase.js";
 
 // =====================
@@ -16,6 +19,9 @@ let currentUser = JSON.parse(localStorage.getItem("currentUser"));
 // Active unsubscribe holders
 let unsubTasks     = null;
 let unsubMessages  = null;
+let unsubClients   = null;
+
+let clients = [];
 
 // =====================================================================
 // EMPLOYEE PAGE LOGIC
@@ -55,8 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const empNavBtnTasks       = document.getElementById("nav-btn-tasks");
     const empNavBtnChat        = document.getElementById("nav-btn-chat");
+    const empNavBtnClients     = document.getElementById("nav-btn-clients");
+    const empChatClear         = document.getElementById("emp-chat-clear");
     const sectionTasks         = document.getElementById("section-tasks");
     const sectionChat          = document.getElementById("section-chat");
+    const sectionClients       = document.getElementById("section-clients");
     const employeeTasksList    = document.getElementById("employee-tasks-list");
     const taskCounter          = document.getElementById("task-counter");
     const btnLogout            = document.getElementById("btn-logout");
@@ -70,35 +79,62 @@ document.addEventListener("DOMContentLoaded", () => {
     const empChatSend          = document.getElementById("emp-chat-send");
     const filterDateEmployee   = document.getElementById("filter-date-employee");
     
+    // Clients Elements
+    const clientForm           = document.getElementById("client-form");
+    const clientNameInput      = document.getElementById("client-name");
+    const clientGmbInput       = document.getElementById("client-gmb");
+    const clientWorkInput      = document.getElementById("client-work");
+    const clientReportDateInput= document.getElementById("client-report-date");
+    const clientsTableBody     = document.getElementById("clients-table-body");
+    
     let activeChatContact = null;
 
     // Set default date to today
     const today = new Date().toISOString().split('T')[0];
-    if (filterDateEmployee) filterDateEmployee.value = today;
 
     filterDateEmployee.addEventListener("change", renderEmployeeTasks);
 
     // ---- Nav toggle ----
+    function resetNav() {
+        [empNavBtnTasks, empNavBtnChat, empNavBtnClients].forEach(btn => {
+            if (btn) { btn.classList.remove("bg-slate-700", "shadow-sm"); btn.classList.add("text-slate-100"); }
+        });
+        [sectionTasks, sectionChat, sectionClients].forEach(sec => {
+            if (sec) { sec.classList.add("hidden"); sec.classList.remove("flex"); }
+        });
+    }
+
     empNavBtnTasks.addEventListener("click", () => {
+        resetNav();
         empNavBtnTasks.classList.add("bg-slate-700","shadow-sm"); empNavBtnTasks.classList.remove("text-slate-100");
-        empNavBtnChat.classList.remove("bg-slate-700","shadow-sm"); empNavBtnChat.classList.add("text-slate-100");
         sectionTasks.classList.remove("hidden"); sectionTasks.classList.add("flex");
-        sectionChat.classList.add("hidden"); sectionChat.classList.remove("flex");
     });
     empNavBtnChat.addEventListener("click", () => {
+        resetNav();
         empNavBtnChat.classList.add("bg-slate-700","shadow-sm"); empNavBtnChat.classList.remove("text-slate-100");
-        empNavBtnTasks.classList.remove("bg-slate-700","shadow-sm"); empNavBtnTasks.classList.add("text-slate-100");
         sectionChat.classList.remove("hidden"); sectionChat.classList.add("flex");
-        sectionTasks.classList.add("hidden"); sectionTasks.classList.remove("flex");
         renderEmpChatList();
         renderEmpChatMessages();
     });
+    if (empNavBtnClients) {
+        empNavBtnClients.addEventListener("click", () => {
+            resetNav();
+            empNavBtnClients.classList.add("bg-slate-700","shadow-sm"); empNavBtnClients.classList.remove("text-slate-100");
+            sectionClients.classList.remove("hidden"); sectionClients.classList.add("flex");
+            renderClientsTable();
+        });
+    }
 
     btnLogout.addEventListener("click", () => { localStorage.removeItem("currentUser"); window.location.href = "index.html"; });
 
     function renderEmployeeTasks() {
         const selectedDate = filterDateEmployee.value;
-        const myTasks = tasks.filter(task => (task.assignee === currentUser.name || task.assignee === "All Employees") && task.date === selectedDate);
+        const myTasks = tasks.filter(task => {
+            const matchesUser = task.assignee === currentUser.name || task.assignee === "All Employees";
+            if (!matchesUser) return false;
+            if (selectedDate) return task.date === selectedDate;
+            return !task.completed;
+        });
         if (myTasks.length === 0) {
             employeeTasksList.innerHTML = `<div class="text-center text-gray-500 py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center">
                 <i class="fa-solid fa-mug-hot text-4xl text-gray-300 mb-3"></i><p>No tasks found for ${selectedDate}.</p></div>`;
@@ -108,9 +144,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         let pendingCount = 0;
         employeeTasksList.innerHTML = myTasks.map(task => {
+            const isOverdue = task.deadline && task.deadline < today && !task.completed;
             if (!task.completed) pendingCount++;
             return `
-            <div class="task-item p-4 md:p-5 rounded-xl border ${task.completed ? 'bg-gray-50 border-gray-200 opacity-75' : 'bg-white border-slate-200 shadow-sm'} mb-3 md:mb-4 flex flex-col md:flex-row gap-4 items-start md:items-center transition-all hover:border-slate-300 hover:shadow-md">
+            <div class="task-item p-4 md:p-5 rounded-xl border ${task.completed ? 'bg-gray-50 border-gray-200 opacity-75' : isOverdue ? 'border-red-400 bg-red-100/90 shadow-sm' : 'bg-white border-slate-200 shadow-sm'} mb-3 md:mb-4 flex flex-col md:flex-row gap-4 items-start md:items-center transition-all hover:border-slate-300 hover:shadow-md">
                 <div class="pt-1 hidden md:block">
                     <div class="w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-300 hover:border-slate-500'}" onclick="window.handleToggleTask('${task.id}', ${task.completed})">
                         ${task.completed ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}
@@ -119,9 +156,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="flex-1">
                     <h4 class="text-lg font-bold ${task.completed ? 'text-gray-500 line-through' : 'text-gray-800'} mb-1">${task.title}</h4>
                     ${task.description ? `<p class="text-gray-600 text-sm mb-3 ${task.completed ? 'hidden' : ''}">${task.description}</p>` : ''}
-                    ${task.remark ? `<div class="mt-2 mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200 text-amber-800 text-sm flex gap-2"><i class="fa-solid fa-triangle-exclamation mt-0.5"></i><div><span class="font-bold">Reported Issue:</span> ${task.remark}</div></div>` : ''}
+                    ${task.remark ? `<div class="mt-2 mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200 text-amber-800 text-sm flex gap-2"><i class="fa-solid fa-triangle-exclamation mt-0.5"></i><div class="break-all"><span class="font-bold">Reported Issue:</span> ${task.remark}</div></div>` : ''}
                     <div class="flex items-center justify-between mt-2 flex-wrap gap-3">
-                        <span class="text-xs font-medium text-gray-500 flex items-center gap-1"><i class="fa-regular fa-calendar-check text-slate-400"></i> ${task.date} &bull; <span class="text-slate-600 font-semibold">${task.assignee}</span></span>
+                        <span class="text-xs font-medium text-gray-500 flex items-center gap-1 flex-wrap">
+                            <i class="fa-regular fa-calendar-check text-slate-400"></i> ${task.date} &bull; 
+                            <span class="text-slate-600 font-semibold">${task.assignee}</span>
+                            ${task.deadline ? `&bull; <span class="${isOverdue ? 'text-red-700 bg-red-100/80 px-1.5 py-0.5 rounded border border-red-200 flex items-center gap-1' : 'text-amber-600 flex items-center gap-1'} font-bold"><i class="fa-solid fa-hourglass-half text-[10px]"></i> Due: ${task.deadline} ${isOverdue ? '(Overdue)' : ''}</span>` : ''}
+                        </span>
                         <div class="flex items-center gap-2">
                             ${!task.completed ? `
                                 <button onclick="window.toggleRemarkInput('emp-${task.id}')" class="text-sm font-semibold text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors border border-amber-200"><i class="fa-regular fa-comment-dots"></i> Issue</button>
@@ -205,6 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
         empChatInput.classList.add("bg-white");
         empChatSend.classList.remove("bg-gray-400", "cursor-not-allowed");
         empChatSend.classList.add("bg-slate-600", "hover:bg-slate-700");
+        if (empChatClear) empChatClear.classList.remove("hidden");
         
         markMessagesRead(name, currentUser.name);
         renderEmpChatList();
@@ -244,10 +286,15 @@ document.addEventListener("DOMContentLoaded", () => {
             ${conversation.map(msg => {
                 const isMe = msg.sender === currentUser.name;
                 return `
-                <div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeIn">
-                    <div class="max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${isMe ? 'bg-slate-800 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}">
+                <div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fadeIn group">
+                    <div class="relative max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${isMe ? 'bg-slate-800 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}">
                         <p class="whitespace-pre-wrap break-words leading-relaxed">${msg.text}</p>
-                        <p class="text-[10px] mt-1.5 text-right font-medium ${isMe ? 'text-slate-300' : 'text-gray-400'}">${msg.time}</p>
+                        <div class="flex items-center justify-between mt-1.5 gap-2">
+                            <button onclick="window.handleDeleteMessage('${msg.id}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-red-500 hover:text-red-600 transition-all pr-1" title="Delete message">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            <p class="text-[10px] font-medium ${isMe ? 'text-slate-300' : 'text-gray-400'} ml-auto">${msg.time}</p>
+                        </div>
                     </div>
                 </div>`;
             }).join('')}
@@ -267,6 +314,14 @@ document.addEventListener("DOMContentLoaded", () => {
             time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         });
     }
+
+    window.handleDeleteMessage = async function(msgId) {
+        try {
+            await deleteMessage(msgId);
+        } catch (err) {
+            console.error("Delete failed:", err);
+        }
+    };
 
     empChatSend.addEventListener("click", sendEmpMessage);
     empChatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendEmpMessage(); });
@@ -302,6 +357,49 @@ document.addEventListener("DOMContentLoaded", () => {
         else { badge.classList.add("hidden"); }
     }
 
+    // =====================
+    // CLIENTS LOGIC
+    // =====================
+
+
+    function renderClientsTable() {
+        if (!clientsTableBody) return;
+        
+        if (clients.length === 0) {
+            clientsTableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-10 text-gray-400">
+                        <i class="fa-solid fa-address-card text-3xl mb-2 block"></i>
+                        No clients found. Add one above.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        clientsTableBody.innerHTML = clients.map((client, index) => {
+            const isActive = client.active !== false; 
+            return `
+                <tr class="border-b border-gray-100 hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 text-gray-500 font-medium">${index + 1}</td>
+                    <td class="px-4 py-3 font-bold text-gray-800 max-w-[200px] break-words whitespace-normal">${client.name}</td>
+                    <td class="px-4 py-3 text-gray-600 max-w-[150px] break-words whitespace-normal">${client.work || '-'}</td>
+                    <td class="px-4 py-3">
+                        <a href="${client.gmb}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-xs"></i> View GMB
+                        </a>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${isActive ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 font-medium">${client.reportDate}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
     // ---- Firestore Listeners ----
     unsubTasks = listenTasks((newTasks) => {
         tasks = newTasks;
@@ -313,5 +411,10 @@ document.addEventListener("DOMContentLoaded", () => {
         updateUnreadBadges();
         renderEmpChatList();
         renderEmpChatMessages();
+    });
+
+    unsubClients = listenAllClients((newClients) => {
+        clients = newClients;
+        renderClientsTable();
     });
 });

@@ -3,7 +3,10 @@ import {
     listenEmployees,
     listenMessages,
     addMessage,
-    markMessagesRead
+    markMessagesRead,
+    listenAllClients,
+    deleteMessage,
+    clearChat
 } from "./firebase.js";
 
 // =====================
@@ -12,12 +15,14 @@ import {
 let tasks     = [];
 let employees = [];
 let messages  = [];
+let clients   = [];
 let currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
 // Active unsubscribe holders
 let unsubTasks     = null;
 let unsubEmployees = null;
 let unsubMessages  = null;
+let unsubClients   = null;
 
 // =====================================================================
 // MANAGER PAGE LOGIC
@@ -54,8 +59,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const navBtnManagerTasks = document.getElementById("nav-btn-manager-tasks");
     const navBtnManagerChat  = document.getElementById("nav-btn-manager-chat");
+    const navBtnManagerClients = document.getElementById("nav-btn-manager-clients");
+    const mgrChatClear       = document.getElementById("mgr-chat-clear");
+
     const sectionManagerViewTasks = document.getElementById("section-manager-view-tasks");
     const sectionManagerChat      = document.getElementById("section-manager-chat");
+    const sectionManagerClients   = document.getElementById("section-manager-clients");
+
+    const managerClientsTableBody = document.getElementById("manager-clients-table-body");
 
     const btnLogout       = document.getElementById("btn-logout");
     const managerAllTasksList = document.getElementById("manager-all-tasks-list");
@@ -73,14 +84,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Set default date to today
     const today = new Date().toISOString().split('T')[0];
-    if (filterDateManager) filterDateManager.value = today;
 
     filterDateManager.addEventListener("change", renderManagerTasks);
     btnLogout.addEventListener("click", () => { localStorage.removeItem("currentUser"); window.location.href = "index.html"; });
 
     // ---- Nav helpers ----
     function activateNav(activeBtn) {
-        [navBtnManagerTasks, navBtnManagerChat].forEach(btn => {
+        [navBtnManagerTasks, navBtnManagerChat, navBtnManagerClients].forEach(btn => {
+            if (!btn) return;
             btn.classList.remove("bg-slate-700", "shadow-sm");
             btn.classList.add("text-slate-300");
         });
@@ -89,7 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showSection(activeSection) {
-        [sectionManagerViewTasks, sectionManagerChat].forEach(sec => {
+        [sectionManagerViewTasks, sectionManagerChat, sectionManagerClients].forEach(sec => {
+            if (!sec) return;
             sec.classList.remove("flex");
             sec.classList.add("hidden");
         });
@@ -99,10 +111,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     navBtnManagerTasks.addEventListener("click", () => { activateNav(navBtnManagerTasks); showSection(sectionManagerViewTasks); renderManagerTasks(); });
     navBtnManagerChat.addEventListener("click",  () => { activateNav(navBtnManagerChat);  showSection(sectionManagerChat); renderMgrChatList(); renderMgrChatMessages(); });
+    navBtnManagerClients.addEventListener("click", () => { activateNav(navBtnManagerClients); showSection(sectionManagerClients); renderClientsTable(); });
 
     function renderManagerTasks() {
         const selectedDate = filterDateManager.value;
-        const filteredTasks = tasks.filter(t => t.date === selectedDate);
+        const filteredTasks = tasks.filter(t => {
+            if (selectedDate) return t.date === selectedDate;
+            return !t.completed;
+        });
         if (filteredTasks.length === 0) {
             managerAllTasksList.innerHTML = `<div class="text-center text-gray-500 py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center"><i class="fa-solid fa-clipboard text-4xl text-gray-300 mb-3"></i><p>No tasks found for ${selectedDate}.</p></div>`;
             return;
@@ -114,8 +130,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const completedTasks = assigneeTasks.filter(t => t.completed).length;
             const totalTasks = assigneeTasks.length;
             const percent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-            const taskListHtml = assigneeTasks.map(task => `
-                <div class="flex items-start justify-between p-3 rounded-lg border ${task.completed ? 'bg-green-50 border-green-100' : 'bg-white border-gray-100'}">
+            const taskListHtml = assigneeTasks.map(task => {
+                const isOverdue = task.deadline && task.deadline < today && !task.completed;
+                return `
+                <div class="flex items-start justify-between p-3 rounded-lg border ${task.completed ? 'bg-green-50 border-green-100' : isOverdue ? 'bg-red-100/90 border-red-400 shadow-sm' : 'bg-white border-gray-100'}">
                     <div class="flex items-start gap-3 w-full max-w-[85%]">
                         <div class="w-5 h-5 mt-0.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${task.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'}">
                             ${task.completed ? '<i class="fa-solid fa-check text-white text-[10px]"></i>' : ''}
@@ -123,11 +141,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="flex-1">
                             <p class="font-medium ${task.completed ? 'text-gray-500 line-through text-sm' : 'text-gray-800 text-sm'}">${task.title}</p>
                             ${task.description ? `<p class="text-xs text-gray-400 mt-0.5 truncate max-w-xs">${task.description}</p>` : ''}
-                            ${task.remark ? `<div class="mt-1.5 p-1.5 bg-amber-50 rounded border border-amber-200 text-amber-800 text-xs flex gap-1.5"><i class="fa-solid fa-triangle-exclamation mt-0.5"></i><span><strong>Issue:</strong> ${task.remark}</span></div>` : ''}
+                            ${task.remark ? `<div class="mt-1.5 p-1.5 bg-amber-50 rounded border border-amber-200 text-amber-800 text-xs flex gap-1.5"><i class="fa-solid fa-triangle-exclamation mt-0.5"></i><span class="break-all"><strong>Issue:</strong> ${task.remark}</span></span></div>` : ''}
+                            ${task.deadline ? `<div class="mt-1 p-1 bg-amber-50/50 rounded border border-amber-100 text-amber-700 text-[10px] flex gap-1 items-center max-w-max"><i class="fa-solid fa-hourglass-half text-[10px]"></i> <span><strong>Due:</strong> ${task.deadline}</span></div>` : ''}
                         </div>
                     </div>
                     <span class="text-[10px] text-gray-400 font-medium ml-4">${task.date}</span>
-                </div>`).join('');
+                </div>`;
+            }).join('');
             html += `
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group mb-6">
                 <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
@@ -195,6 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mgrChatInput.classList.add("bg-white");
         mgrChatSend.classList.remove("bg-gray-400", "cursor-not-allowed");
         mgrChatSend.classList.add("bg-slate-800", "hover:bg-slate-900");
+        if (mgrChatClear) mgrChatClear.classList.remove("hidden");
         markMessagesRead(name, "Manager");
         renderMgrChatList();
         renderMgrChatMessages();
@@ -216,10 +237,15 @@ document.addEventListener("DOMContentLoaded", () => {
         mgrChatMessages.innerHTML = `<div class="space-y-4 pt-2 pb-2">
             ${conversation.map(msg => {
                 const isMe = msg.sender === "Manager";
-                return `<div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'}">
-                    <div class="max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm ${isMe ? 'bg-slate-800 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}">
+                return `<div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'} group">
+                    <div class="relative max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm ${isMe ? 'bg-slate-800 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}">
                         <p>${msg.text}</p>
-                        <p class="text-[10px] mt-1 text-right ${isMe ? 'text-slate-300' : 'text-gray-400'}">${msg.time}</p>
+                        <div class="flex items-center justify-between mt-1 gap-2">
+                            <button onclick="window.handleDeleteMessage('${msg.id}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-red-500 hover:text-red-600 transition-all pr-1" title="Delete message">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            <p class="text-[10px] ${isMe ? 'text-slate-300' : 'text-gray-400'} ml-auto">${msg.time}</p>
+                        </div>
                     </div>
                 </div>`;
             }).join('')}
@@ -239,6 +265,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    window.handleDeleteMessage = async function(msgId) {
+        try {
+            await deleteMessage(msgId);
+        } catch (err) {
+            console.error("Delete failed:", err);
+        }
+    };
+
     mgrChatSend.addEventListener("click", sendMgrMessage);
     mgrChatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendMgrMessage(); });
 
@@ -248,6 +282,35 @@ document.addEventListener("DOMContentLoaded", () => {
         const unreadCount = messages.filter(m => m.receiver === "Manager" && !m.read).length;
         if (unreadCount > 0) { badge.textContent = unreadCount; badge.classList.remove("hidden"); }
         else { badge.classList.add("hidden"); }
+    }
+
+    function renderClientsTable() {
+        if (!managerClientsTableBody) return;
+        if (clients.length === 0) {
+            managerClientsTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">No clients found.</td></tr>`;
+            return;
+        }
+        managerClientsTableBody.innerHTML = clients.map((client, index) => {
+            const isActive = client.active !== false;
+            return `
+                <tr class="border-b border-gray-100 hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 text-gray-500 font-medium">${index + 1}</td>
+                    <td class="px-4 py-3 font-bold text-gray-800 max-w-[200px] break-words whitespace-normal">${client.name}</td>
+                    <td class="px-4 py-3 text-gray-600 max-w-[150px] break-words whitespace-normal">${client.work || '-'}</td>
+                    <td class="px-4 py-3">
+                        <a href="${client.gmb}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-xs"></i> View GMB
+                        </a>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${isActive ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 font-medium">${client.reportDate}</td>
+                </tr>
+            `;
+        }).join('');
     }
 
     // ---- Firestore Listeners ----
@@ -266,5 +329,10 @@ document.addEventListener("DOMContentLoaded", () => {
         updateUnreadBadges();
         renderMgrChatList();
         renderMgrChatMessages();
+    });
+
+    unsubClients = listenAllClients((newClients) => {
+        clients = newClients;
+        if (typeof renderClientsTable === "function") renderClientsTable();
     });
 });

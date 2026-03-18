@@ -28,7 +28,7 @@
 
         <!-- ══════════ SIDEBAR ══════════ -->
         <div id="sidebar" class="fixed top-0 left-0 h-screen bg-slate-800 text-white w-72 p-6 flex flex-col shrink-0 shadow-xl z-40
-                                  -translate-x-full md:translate-x-0 md:relative md:flex md:h-screen">
+                                  -translate-x-full md:translate-x-0 md:sticky md:top-0 md:flex md:h-screen overflow-y-auto custom-scrollbar">
             <!-- Close btn (mobile only) -->
             <button id="sidebar-close" class="absolute top-4 right-4 text-slate-400 hover:text-white md:hidden">
                 <i class="fa-solid fa-xmark text-xl"></i>
@@ -66,9 +66,13 @@
                     class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-700 transition-colors text-left w-full font-medium text-slate-300">
                     <i class="fa-solid fa-layer-group w-4"></i> All Tasks Overview
                 </button>
-                <button id="nav-btn-manage"
+                 <button id="nav-btn-manage"
                     class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-700 transition-colors text-left w-full font-medium text-slate-300">
                     <i class="fa-solid fa-users-gear w-4"></i> Manage Employees
+                </button>
+                <button id="nav-btn-clients"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-700 transition-colors text-left w-full font-medium text-slate-300">
+                    <i class="fa-solid fa-address-card w-4"></i> Manage Clients
                 </button>
                 <button id="nav-btn-chat"
                     class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-700 transition-colors text-left w-full font-medium text-slate-300">
@@ -148,12 +152,18 @@
                                         <!-- Dynamic options -->
                                     </select>
                                 </div>
-                                <div class="mb-4">
-                                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1"
-                                        for="task-date-assign">Task Date</label>
-                                    <input type="date" id="task-date-assign" required
-                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all">
-                                </div>
+                                 <div class="mb-3">
+                                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1"
+                                         for="task-date-assign">Task Date</label>
+                                     <input type="date" id="task-date-assign" required
+                                         class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all">
+                                 </div>
+                                 <div class="mb-4">
+                                     <label class="block text-xs font-bold text-amber-600 uppercase tracking-wider mb-1"
+                                         for="task-deadline">Deadline</label>
+                                     <input type="date" id="task-deadline" required
+                                         class="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-amber-50/10">
+                                 </div>
                                 <button type="submit"
                                     class="w-full bg-slate-800 text-white font-medium py-2.5 rounded-lg hover:bg-slate-900 transition-all flex items-center justify-center gap-2 text-sm">
                                     <i class="fa-solid fa-paper-plane"></i> Assign Task
@@ -234,11 +244,17 @@
                             </h2>
                             <p class="text-gray-500 text-sm mt-1">Monitor the progress of all assigned tasks.</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <label for="filter-date-all-tasks"
-                                class="text-xs font-bold text-gray-400 uppercase tracking-widest">Filter Date:</label>
-                            <input type="date" id="filter-date-all-tasks"
-                                class="text-sm border border-gray-300 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-slate-600">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <div class="flex items-center gap-1.5">
+                                <label for="filter-assignee-all-tasks" class="text-xs font-bold text-gray-400 uppercase tracking-widest">Employee:</label>
+                                <select id="filter-assignee-all-tasks" class="text-sm border border-gray-300 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-slate-600 bg-white font-medium">
+                                    <option value="">-- All --</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-1.5 border-l pl-3 border-slate-200">
+                                <label for="filter-date-all-tasks" class="text-xs font-bold text-gray-400 uppercase tracking-widest">Date:</label>
+                                <input type="date" id="filter-date-all-tasks" class="text-sm border border-gray-300 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-slate-600">
+                            </div>
                         </div>
                     </div>
                     <div id="grouped-tasks-list" class="space-y-8"></div>
@@ -264,6 +280,69 @@
                         <p class="text-gray-500 text-sm mt-1">Manage tasks assigned directly to you.</p>
                     </div>
                     <div id="my-tasks-list" class="space-y-4 min-h-[300px]"></div>
+                </div>
+
+                <!-- ── Clients ── -->
+                <div id="section-clients" class="hidden flex-col w-full max-w-5xl mx-auto animate-fadeIn">
+                    <div class="mb-5 border-b pb-4">
+                        <h2 class="text-xl sm:text-3xl font-bold text-gray-800 tracking-tight">Manage Clients</h2>
+                        <p class="text-gray-500 text-sm mt-1">Add, update, and manage all system clients.</p>
+                    </div>
+
+                    <!-- Add Client Form -->
+                    <form id="client-form" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-6 mb-6 shadow-sm">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Add New Client</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="client-name">Client Name</label>
+                                <input type="text" id="client-name" required
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="client-gmb">GMB Link</label>
+                                <input type="url" id="client-gmb" required
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="client-work">Work Type</label>
+                                <input type="text" id="client-work" required
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="client-report-date">Monthly Report Date</label>
+                                <input type="date" id="client-report-date" required
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all bg-white">
+                            </div>
+                            <div class="flex flex-col justify-end">
+                                <button type="submit"
+                                    class="w-full bg-slate-800 text-white font-medium py-2.5 rounded-lg hover:bg-slate-900 transition-all flex items-center justify-center gap-2 text-sm">
+                                    <i class="fa-solid fa-plus"></i> Add Client
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Clients Table -->
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Client Name</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Work Type</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">GMB Link</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Report Date</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clients-table-body">
+                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Loading clients...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ── Chat ── -->
@@ -298,12 +377,13 @@
                         <div
                             class="flex-1 flex flex-col bg-gray-50 border border-gray-200 rounded-xl shadow-inner overflow-hidden">
                             <!-- Chat header -->
-                            <div class="p-3 sm:p-4 bg-white border-b border-gray-200 flex items-center gap-3 shrink-0">
-                                <div id="ldr-chat-active-avatar"
-                                    class="w-9 h-9 rounded-full bg-slate-200 text-slate-800 font-bold flex items-center justify-center hidden shrink-0">
+                            <div class="p-3 sm:p-4 bg-white border-b border-gray-200 flex items-center justify-between gap-3 shrink-0">
+                                <div class="flex items-center gap-3">
+                                    <div id="ldr-chat-active-avatar"
+                                        class="w-9 h-9 rounded-full bg-slate-200 text-slate-800 font-bold flex items-center justify-center hidden shrink-0">
+                                    </div>
+                                    <h4 id="ldr-chat-active-name" class="font-bold text-gray-800 text-sm sm:text-base">No contact selected</h4>
                                 </div>
-                                <h4 id="ldr-chat-active-name" class="font-bold text-gray-800 text-sm sm:text-base">No
-                                    contact selected</h4>
                             </div>
 
                             <!-- Messages -->
@@ -334,6 +414,97 @@
             </div><!-- /content area -->
         </div><!-- /main area -->
     </div><!-- /layout -->
+
+    <!-- ── Edit Employee Modal ── -->
+    <div id="edit-employee-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-slate-50">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-user-gear text-slate-600"></i> Edit Employee
+                </h3>
+                <button type="button" id="edit-emp-close" class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto">
+                <form id="edit-employee-form" class="space-y-4">
+                    <input type="hidden" id="edit-emp-id">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="edit-emp-name">Employee Name</label>
+                        <input type="text" id="edit-emp-name" required readonly
+                            class="w-full px-3 py-2 text-sm border border-gray-200 bg-gray-50 rounded-lg outline-none cursor-not-allowed text-gray-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="edit-emp-pass">New Password</label>
+                        <input type="password" id="edit-emp-pass" required
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all">
+                    </div>
+                    
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" id="edit-emp-cancel" class="flex-1 bg-gray-100 text-gray-700 font-medium py-2 rounded-xl hover:bg-gray-200 transition-all text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit" id="edit-emp-submit" class="flex-1 bg-slate-800 text-white font-medium py-2 rounded-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-check"></i> Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Edit Client Modal ── -->
+    <div id="edit-client-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-slate-50">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-slate-600"></i> Edit Client
+                </h3>
+                <button type="button" id="edit-client-close" class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto">
+                <form id="edit-client-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="edit-client-name">Client Name</label>
+                        <input type="text" id="edit-client-name" required
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="edit-client-gmb">GMB Link</label>
+                        <input type="url" id="edit-client-gmb" required
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="edit-client-work">Work Type</label>
+                        <input type="text" id="edit-client-work" required
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1" for="edit-client-report-date">Monthly Report Date</label>
+                        <input type="date" id="edit-client-report-date" required
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-600 focus:border-slate-600 outline-none transition-all">
+                    </div>
+                    
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" id="edit-client-cancel" class="flex-1 bg-gray-100 text-gray-700 font-medium py-2 rounded-xl hover:bg-gray-200 transition-all text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit" id="edit-client-submit" class="flex-1 bg-slate-800 text-white font-medium py-2 rounded-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-check"></i> Update Client
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="assets/js/leader.js"></script>
     <script>

@@ -14,7 +14,8 @@ import {
     query,
     orderBy,
     serverTimestamp,
-    where
+    where,
+    writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
     getAuth,
@@ -110,6 +111,10 @@ export async function addEmployee(emp) {
     return docRef.id;
 }
 
+export async function updateEmployee(empId, data) {
+    await updateDoc(doc(db, "employees", empId), data);
+}
+
 export async function deleteEmployee(empId) {
     await deleteDoc(doc(db, "employees", empId));
 }
@@ -145,4 +150,77 @@ export async function markMessagesRead(sender, receiver) {
     await Promise.all(updates);
 }
 
+// =====================
+// CLIENTS
+// =====================
+export function listenClients(employeeName, callback) {
+    const q = query(
+        collection(db, "clients"),
+        where("employeeName", "==", employeeName)
+    );
+    return onSnapshot(q, (snapshot) => {
+        const clients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Sort in memory to avoid needing a Firestore composite index
+        clients.sort((a, b) => {
+            const tA = a.createdAt ? a.createdAt.toMillis() : Date.now();
+            const tB = b.createdAt ? b.createdAt.toMillis() : Date.now();
+            return tA - tB;
+        });
+        callback(clients);
+    });
+}
+
+export function listenAllClients(callback) {
+    const q = query(collection(db, "clients"));
+    return onSnapshot(q, (snapshot) => {
+        const clients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        clients.sort((a, b) => {
+            const tA = a.createdAt ? a.createdAt.toMillis() : Date.now();
+            const tB = b.createdAt ? b.createdAt.toMillis() : Date.now();
+            return tA - tB;
+        });
+        callback(clients);
+    });
+}
+
+export async function addClient(client) {
+    const docRef = await addDoc(collection(db, "clients"), {
+        ...client,
+        createdAt: serverTimestamp()
+    });
+    return docRef.id;
+}
+
+export async function updateClient(clientId, updates) {
+    await updateDoc(doc(db, "clients", clientId), updates);
+}
+
+export async function deleteClient(clientId) {
+    await deleteDoc(doc(db, "clients", clientId));
+}
+
+export async function deleteMessage(messageId) {
+    try {
+        const docRef = doc(db, "messages", messageId);
+        await deleteDoc(docRef);
+        alert("Firestore Delete Doc SUCCESS resolved for ID: " + messageId);
+    } catch (err) {
+        alert("Firestore Delete Doc ERROR: " + err.message);
+    }
+}
+
+export async function clearChat(user1, user2) {
+    const q1 = query(collection(db, "messages"), where("sender", "==", user1), where("receiver", "==", user2));
+    const q2 = query(collection(db, "messages"), where("sender", "==", user2), where("receiver", "==", user1));
+    
+    const snap1 = await getDocs(q1);
+    const snap2 = await getDocs(q2);
+    
+    const batch = writeBatch(db);
+    snap1.forEach(d => batch.delete(d.ref));
+    snap2.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+}
+
 export { db, auth };
+

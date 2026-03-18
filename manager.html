@@ -25,7 +25,7 @@
 
         <!-- ══════════ SIDEBAR ══════════ -->
         <div id="sidebar" class="fixed top-0 left-0 h-screen bg-slate-800 text-white w-72 p-6 flex flex-col shrink-0 shadow-xl z-40
-                                  -translate-x-full md:translate-x-0 md:relative md:flex md:h-screen">
+                                  -translate-x-full md:translate-x-0 md:sticky md:top-0 md:flex md:h-screen overflow-y-auto custom-scrollbar">
             <button id="sidebar-close" class="absolute top-4 right-4 text-slate-400 hover:text-white md:hidden">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
@@ -51,10 +51,14 @@
                 <button id="nav-btn-manager-tasks" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-700 shadow-sm transition-colors text-left w-full font-medium">
                     <i class="fa-solid fa-list-check w-4"></i> All Tasks Overview
                 </button>
-                <button id="nav-btn-manager-chat" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-700 transition-colors text-left w-full font-medium text-slate-300">
+                 <button id="nav-btn-manager-chat" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-700 transition-colors text-left w-full font-medium text-slate-300">
                     <i class="fa-solid fa-comments w-4"></i>
                     <span class="flex-1">Messages</span>
                     <span id="nav-badge-manager-chat" class="hidden bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+                </button>
+                <button id="nav-btn-manager-clients" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-700 transition-colors text-left w-full font-medium text-slate-300">
+                    <i class="fa-solid fa-address-card w-4"></i>
+                    <span>Clients</span>
                 </button>
             </div>
 
@@ -101,6 +105,35 @@
                     <div id="manager-all-tasks-list" class="space-y-8"></div>
                 </div>
 
+                <!-- ── Clients ── -->
+                <div id="section-manager-clients" class="hidden flex-col w-full max-w-5xl mx-auto animate-fadeIn">
+                    <div class="mb-5 border-b pb-4">
+                        <h2 class="text-xl sm:text-3xl font-bold text-gray-800 tracking-tight">View Clients</h2>
+                        <p class="text-gray-500 text-sm mt-1">Check and monitor all client updates system-wide.</p>
+                    </div>
+
+                    <!-- Clients Table -->
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Client Name</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Work Type</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">GMB Link</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Report Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="manager-clients-table-body">
+                                    <tr><td colspan="6" class="text-center py-10 text-gray-400">Loading clients...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── Chat ── -->
                 <div id="section-manager-chat" class="hidden flex-col animate-fadeIn w-full max-w-4xl mx-auto">
                     <div class="mb-4 border-b pb-4">
@@ -128,9 +161,11 @@
                         <!-- Chat Box -->
                         <div class="flex-1 flex flex-col bg-gray-50 border border-gray-200 rounded-xl shadow-inner overflow-hidden">
                             <!-- Chat header -->
-                            <div class="p-3 sm:p-4 bg-white border-b border-gray-200 flex items-center gap-3 shrink-0">
-                                <div id="mgr-chat-active-avatar" class="w-9 h-9 rounded-full bg-slate-200 text-slate-800 font-bold flex items-center justify-center hidden shrink-0"></div>
-                                <h4 id="mgr-chat-active-name" class="font-bold text-gray-800 text-sm sm:text-base">No contact selected</h4>
+                            <div class="p-3 sm:p-4 bg-white border-b border-gray-200 flex items-center justify-between gap-3 shrink-0">
+                                <div class="flex items-center gap-3">
+                                    <div id="mgr-chat-active-avatar" class="w-9 h-9 rounded-full bg-slate-200 text-slate-800 font-bold flex items-center justify-center hidden shrink-0"></div>
+                                    <h4 id="mgr-chat-active-name" class="font-bold text-gray-800 text-sm sm:text-base">No contact selected</h4>
+                                </div>
                             </div>
 
                             <!-- Messages -->
