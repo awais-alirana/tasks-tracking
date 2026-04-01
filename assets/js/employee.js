@@ -365,33 +365,36 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderClientsTable() {
         if (!clientsTableBody) return;
         
-        if (clients.length === 0) {
+        // Filter only active clients
+        const activeClients = clients.filter(c => c.active !== false);
+        
+        if (activeClients.length === 0) {
             clientsTableBody.innerHTML = `
                 <tr>
                     <td colspan="7" class="text-center py-10 text-gray-400">
                         <i class="fa-solid fa-address-card text-3xl mb-2 block"></i>
-                        No clients found. Add one above.
+                        No clients found.
                     </td>
                 </tr>
             `;
             return;
         }
 
-        clientsTableBody.innerHTML = clients.map((client, index) => {
-            const isActive = client.active !== false; 
+        clientsTableBody.innerHTML = activeClients.map((client, index) => {
             return `
                 <tr class="border-b border-gray-100 hover:bg-slate-50 transition-colors">
                     <td class="px-4 py-3 text-gray-500 font-medium">${index + 1}</td>
                     <td class="px-4 py-3 font-bold text-gray-800 max-w-[200px] break-words whitespace-normal">${client.name}</td>
                     <td class="px-4 py-3 text-gray-600 max-w-[150px] break-words whitespace-normal">${client.work || '-'}</td>
+                    <td class="px-4 py-3 text-gray-600 font-medium">${client.phone || '-'}</td>
                     <td class="px-4 py-3">
                         <a href="${client.gmb}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
                             <i class="fa-solid fa-location-dot text-xs"></i> View GMB
                         </a>
                     </td>
                     <td class="px-4 py-3">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            ${isActive ? 'Active' : 'Inactive'}
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                            Active
                         </span>
                     </td>
                     <td class="px-4 py-3 text-gray-600 font-medium">${client.reportDate}</td>

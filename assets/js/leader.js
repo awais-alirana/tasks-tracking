@@ -82,7 +82,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const clientGmbInput      = document.getElementById("client-gmb");
     const clientWorkInput     = document.getElementById("client-work");
     const clientReportDateInput = document.getElementById("client-report-date");
+    const clientPhoneInput    = document.getElementById("client-phone");
     const clientsTableBody    = document.getElementById("clients-table-body");
+    const inactiveClientsTableBody = document.getElementById("inactive-clients-table-body");
 
     // Edit Modal DOM
     const editClientModal     = document.getElementById("edit-client-modal");
@@ -91,6 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const editClientGmb       = document.getElementById("edit-client-gmb");
     const editClientWork      = document.getElementById("edit-client-work");
     const editClientReportDate = document.getElementById("edit-client-report-date");
+    const editClientPhone     = document.getElementById("edit-client-phone");
     const editClientClose     = document.getElementById("edit-client-close");
     const editClientCancel    = document.getElementById("edit-client-cancel");
     const ldrChatClear        = document.getElementById("ldr-chat-clear");
@@ -230,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const gmb = clientGmbInput.value.trim();
             const work = clientWorkInput.value.trim();
             const reportDate = clientReportDateInput.value;
+            const phone = clientPhoneInput.value.trim();
 
             try {
                 await addClient({
@@ -237,8 +241,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     gmb,
                     work,
                     reportDate,
+                    phone,
                     active: true,
-                    employeeName: "All" // Global
+                    employeeName: "All"
                 });
                 clientForm.reset();
             } catch (err) {
@@ -251,27 +256,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderClientsTable() {
-        if (!clientsTableBody) return;
-        if (clients.length === 0) {
-            clientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-500 bg-gray-50 rounded-lg">No clients found. Add one above.</td></tr>`;
-            return;
-        }
-
-        clientsTableBody.innerHTML = clients.map((client, index) => {
-            const isActive = client.active !== false; 
-            return `
+        if (!clientsTableBody || !inactiveClientsTableBody) return;
+        
+        // Separate active and inactive clients
+        const activeClients = clients.filter(c => c.active !== false);
+        const inactiveClients = clients.filter(c => c.active === false);
+        
+        // Render active clients in main table
+        if (activeClients.length === 0) {
+            clientsTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-gray-500 bg-gray-50 rounded-lg">No active clients found. Add one above.</td></tr>`;
+        } else {
+            clientsTableBody.innerHTML = activeClients.map((client, index) => {
+                return `
                 <tr class="border-b border-gray-100 hover:bg-slate-50 transition-colors">
                     <td class="px-4 py-3 text-gray-500 font-medium">${index + 1}</td>
                     <td class="px-4 py-3 font-bold text-gray-800 max-w-[200px] break-words whitespace-normal">${client.name}</td>
                     <td class="px-4 py-3 text-gray-600 max-w-[150px] break-words whitespace-normal">${client.work || '-'}</td>
+                    <td class="px-4 py-3 text-gray-600 font-medium">${client.phone || '-'}</td>
                     <td class="px-4 py-3">
                         <a href="${client.gmb}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
                             <i class="fa-solid fa-location-dot text-xs"></i> View GMB
                         </a>
                     </td>
                     <td class="px-4 py-3">
-                        <button onclick="window.toggleClientStatus('${client.id}', ${isActive})" class="px-2.5 py-1 rounded-full text-xs font-bold ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            ${isActive ? 'Active' : 'Inactive'}
+                        <button onclick="window.toggleClientStatus('${client.id}', true)" class="px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                            Active
                         </button>
                     </td>
                     <td class="px-4 py-3 text-gray-600 font-medium">${client.reportDate}</td>
@@ -285,7 +294,43 @@ document.addEventListener("DOMContentLoaded", () => {
                     </td>
                 </tr>
             `;
-        }).join('');
+            }).join('');
+        }
+        
+        // Render inactive clients in separate table
+        if (inactiveClients.length === 0) {
+            inactiveClientsTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-gray-400">No inactive clients</td></tr>`;
+        } else {
+            inactiveClientsTableBody.innerHTML = inactiveClients.map((client, index) => {
+                return `
+                <tr class="border-b border-gray-100 hover:bg-red-50 transition-colors">
+                    <td class="px-4 py-3 text-gray-500 font-medium">${index + 1}</td>
+                    <td class="px-4 py-3 font-bold text-gray-800 max-w-[200px] break-words whitespace-normal">${client.name}</td>
+                    <td class="px-4 py-3 text-gray-600 max-w-[150px] break-words whitespace-normal">${client.work || '-'}</td>
+                    <td class="px-4 py-3 text-gray-600 font-medium">${client.phone || '-'}</td>
+                    <td class="px-4 py-3">
+                        <a href="${client.gmb}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-xs"></i> View GMB
+                        </a>
+                    </td>
+                    <td class="px-4 py-3">
+                        <button onclick="window.toggleClientStatus('${client.id}', false)" class="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                            Inactive
+                        </button>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 font-medium">${client.reportDate}</td>
+                    <td class="px-4 py-3 flex items-center gap-1">
+                        <button onclick="window.editClient('${client.id}')" class="text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50" title="Edit">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="window.handleDeleteClient('${client.id}')" class="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50" title="Delete">
+                            <i class="fa-solid fa-trash-can pointer-events-none"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+        }
     }
 
     window.toggleClientStatus = async function(clientId, currentStatus) {
@@ -316,6 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
         editClientGmb.value = client.gmb || "";
         editClientWork.value = client.work || "";
         editClientReportDate.value = client.reportDate || "";
+        editClientPhone.value = client.phone || "";
         
         editingClientId = clientId;
         if (editClientModal) editClientModal.classList.remove("hidden");
@@ -348,9 +394,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const gmb = editClientGmb.value.trim();
             const work = editClientWork.value.trim();
             const reportDate = editClientReportDate.value;
+            const phone = editClientPhone.value.trim();
 
             try {
-                await updateClient(editingClientId, { name, gmb, work, reportDate });
+                await updateClient(editingClientId, { name, gmb, work, reportDate, phone });
                 closeEditModal();
             } catch (err) {
                 console.error("Update failed:", err);

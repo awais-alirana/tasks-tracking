@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderClientsTable() {
         if (!managerClientsTableBody) return;
         if (clients.length === 0) {
-            managerClientsTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">No clients found.</td></tr>`;
+            managerClientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-400">No clients found.</td></tr>`;
             return;
         }
         managerClientsTableBody.innerHTML = clients.map((client, index) => {
@@ -297,6 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td class="px-4 py-3 text-gray-500 font-medium">${index + 1}</td>
                     <td class="px-4 py-3 font-bold text-gray-800 max-w-[200px] break-words whitespace-normal">${client.name}</td>
                     <td class="px-4 py-3 text-gray-600 max-w-[150px] break-words whitespace-normal">${client.work || '-'}</td>
+                    <td class="px-4 py-3 text-gray-600 font-medium">${client.phone || '-'}</td>
                     <td class="px-4 py-3">
                         <a href="${client.gmb}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
                             <i class="fa-solid fa-location-dot text-xs"></i> View GMB
